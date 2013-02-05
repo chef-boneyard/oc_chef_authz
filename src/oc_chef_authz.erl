@@ -257,7 +257,7 @@ get_acl_for_resource(RequestorId, ResourceType, Id) ->
                                          {error, any()}.
 set_ace_for_object(RequestorId, Id, AccessMethod, #authz_ace{actors=Actors, groups=Groups}) ->
     Url = make_url([pluralize_resource(object), Id, acl, AccessMethod]),
-    Body = jiffy:encode({[{<<"actors">>, Actors}, {<<"groups">>, Groups}]}),
+    Body = erlang:iolist_to_binary(jiffy:encode({[{<<"actors">>, Actors}, {<<"groups">>, Groups}]})),
     case oc_chef_authz_http:request(Url, put, [], Body, RequestorId) of
         ok -> ok;
         %% Expected errors are forbidden, not_found, server_error
