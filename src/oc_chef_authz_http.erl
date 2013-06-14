@@ -73,7 +73,7 @@ request(Path, Method, Headers, Body, RequestorId) ->
 ping() ->
     try
         {ok, AuthzUrl} = application:get_env(oc_chef_authz, authz_root_url),
-        Url = AuthzUrl ++ "/_ping",
+        Url = AuthzUrl ++ "/_status",
         Headers = [{"Accept", "application/json"}],
         case ibrowse:send_req(Url, Headers, get) of
             {ok, "200", _H, _B} -> pong;
