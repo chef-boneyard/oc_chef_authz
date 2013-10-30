@@ -151,47 +151,66 @@ update(#oc_chef_group{
                       auth_side_groups = AuthSideGroups
                      } = Record, CallbackFun) ->
     case chef_object:default_update(Record, CallbackFun) of
+        %% If the group exists, N should be 1.
         N when is_integer(N) andalso N > 0 ->
             ClientAuthzIds = find_client_authz_ids(Clients, OrgId, CallbackFun),
             UserAuthzIds = find_user_authz_ids(Users, CallbackFun),
             GroupAuthzIds = find_group_authz_ids(Groups, OrgId, CallbackFun),
-            BasePath = "/groups/" ++ binary_to_list(GroupAuthzId),
+            BasePath = authz_id_path("/groups/", GroupAuthzId),
+            ActorsPath = BasePath ++ "/actors/",
+            GroupsPath = BasePath ++ "/groups/",
             UserSideActorsAuthzIds = UserAuthzIds ++ ClientAuthzIds,
-            update_bifrost_with_added_authz_ids(BasePath, UserSideActorsAuthzIds, GroupAuthzIds, AuthzId),
             ActorsToRemove = default_to_empty(AuthSideActors) -- UserSideActorsAuthzIds,
             GroupsToRemove = default_to_empty(AuthSideGroups) -- GroupAuthzIds,
-            update_bifrost_with_removed_authz_ids(BasePath, ActorsToRemove, GroupsToRemove, AuthzId),
-            1;
+
+            OpsResults = lists:flatten([
+              put_authz_ids(ActorsPath, UserSideActorsAuthzIds, AuthzId),
+              put_authz_ids(GroupsPath, GroupAuthzIds, AuthzId),
+              delete_authz_ids(ActorsPath, ActorsToRemove, AuthzId),
+              delete_authz_ids(GroupsPath, GroupsToRemove, AuthzId)]),
+
+            %% If there are forbidden results for any reason, kick off a 403 and a list
+            %% of AuthzIds that are forbidden
+            case all_forbidden_ids(OpsResults) of
+                [] ->
+                    length(OpsResults) + N; %% Rename updates at least 1 record
+                ForbiddenIds ->
+                    {error, {forbidden, ForbiddenIds}}
+            end;
        Other  ->
             Other
     end.
-
-update_bifrost_with_added_authz_ids(BasePath, UserSideActorsAuthzIds, GroupAuthzIds, AuthzId) ->
-            ActorsPath = BasePath ++ "/actors/",
-            GroupsPath = BasePath ++ "/groups/",
-            put_authz_ids(ActorsPath, UserSideActorsAuthzIds, AuthzId),
-            put_authz_ids(GroupsPath, GroupAuthzIds, AuthzId).
-
-update_bifrost_with_removed_authz_ids(BasePath, ActorsToRemove, GroupsToRemove, AuthzId) ->
-            ActorsPath = BasePath ++ "/actors/",
-            GroupsPath = BasePath ++ "/groups/",
-            delete_authz_ids(ActorsPath, ActorsToRemove, AuthzId),
-            delete_authz_ids(GroupsPath, GroupsToRemove, AuthzId).
-
 
 default_to_empty(List) when is_list(List) ->
     List;
 default_to_empty(_) ->
     [].
 
-    
+%% Updates a collection of authz_ids. If there are any errors, stash the error and continue.
+%% Partial updates are OK, so we want to be greedy.
+put_authz_ids(Path, UpdateAuthzIds, RequestorId) ->
+    [ sync_authz_id(put, Path, UpdateAuthzId, RequestorId) || UpdateAuthzId <- UpdateAuthzIds ].
 
-put_authz_ids(Path, UpdateAuthzIds, AuthzId) ->
-    [ok = oc_chef_authz_http:request(Path ++ binary_to_list(UpdateAuthzId), put, ?DEFAULT_HEADERS, [], AuthzId) || UpdateAuthzId <- UpdateAuthzIds].
-    
-delete_authz_ids(Path, UpdateAuthzIds, AuthzId) ->
-    [ok = oc_chef_authz_http:request(Path ++ binary_to_list(UpdateAuthzId), delete, ?DEFAULT_HEADERS, [], AuthzId) || UpdateAuthzId <- UpdateAuthzIds].
-    
+%% Deletes a collection of authz_ids. If there are any errors, stash the error and continue.
+%% Partial deletes are OK, so we want to be greedy.
+delete_authz_ids(Path, UpdateAuthzIds, RequestorId) ->
+    [ sync_authz_id(delete, Path, UpdateAuthzId, RequestorId) || UpdateAuthzId <- UpdateAuthzIds ].
+
+%% Makes the request, then injects the return status with the authz id
+sync_authz_id(Method, Path, AuthzId, RequestorId) ->
+    case oc_chef_authz_http:request(authz_id_path(Path, AuthzId), Method, ?DEFAULT_HEADERS, [], RequestorId) of
+        ok              -> {ok, AuthzId};
+        {error, Reason} -> {error, Reason, AuthzId}
+    end.
+
+authz_id_path(Path, AuthzId) ->
+    Path ++ binary_to_list(AuthzId).
+
+%% @doc Extracts a list of authz ids for which Bifrost returns
+%% a 403 forbidden
+all_forbidden_ids(Results) ->
+    [ AuthzId || {error, forbidden, AuthzId} <- Results ].
+
 
 parse_binary_json(Bin) ->
     {ok, chef_json:decode_body(Bin)}.
@@ -293,5 +312,3 @@ delete(ObjectRec = #oc_chef_group{last_updated_by = AuthzId, authz_id = GroupAut
         Error ->
             Error
     end.
-        
-
