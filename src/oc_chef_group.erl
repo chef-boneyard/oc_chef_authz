@@ -16,7 +16,8 @@
          parse_binary_json/1,
          flatten/1,
          assemble_group_ejson/2,
-         delete/2
+         delete/2,
+         handle_error_for_update_ops/2
         ]).
 
 %% chef_object behaviour callbacks
@@ -169,16 +170,19 @@ update(#oc_chef_group{
               delete_authz_ids(ActorsPath, ActorsToRemove, AuthzId),
               delete_authz_ids(GroupsPath, GroupsToRemove, AuthzId)]),
 
-            %% If there are forbidden results for any reason, kick off a 403 and a list
-            %% of AuthzIds that are forbidden
-            case all_forbidden_ids(OpsResults) of
-                [] ->
-                    length(OpsResults) + N; %% Rename updates at least 1 record
-                ForbiddenIds ->
-                    {error, {forbidden, ForbiddenIds}}
-            end;
+            handle_error_for_update_ops(OpsResults, N);
        Other  ->
             Other
+    end.
+
+handle_error_for_update_ops(OpsResults, N) ->
+    %% If there are forbidden results for any reason, kick off a 403 and a list
+    %% of AuthzIds that are forbidden
+    case all_forbidden_ids(OpsResults) of
+        [] ->
+            length(OpsResults) + N; %% Rename updates at least 1 record
+        ForbiddenIds ->
+            {error, {forbidden, ForbiddenIds}}
     end.
 
 default_to_empty(List) when is_list(List) ->
