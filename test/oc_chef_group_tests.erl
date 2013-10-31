@@ -72,6 +72,31 @@ handle_error_test_() ->
                     Expected = {error, {forbidden, [ForbiddenAuthzId]}},
                     ?assertEqual(Expected, oc_chef_group:handle_error_for_update_ops(OpsResults, 1))
             end
+        },
+        { "When one result is server error",
+            fun() ->
+                    ServerErrAuthzId = test_utils:make_az_id("serverr-01"),
+                    OpsResults = [
+                        {ok, test_utils:make_az_id("client-01")},
+                        {error, server_error, ServerErrAuthzId},
+                        {ok, test_utils:make_az_id("client-03")}
+                    ],
+                    Expected = {error, {server_error, [ServerErrAuthzId]}},
+                    ?assertEqual(Expected, oc_chef_group:handle_error_for_update_ops(OpsResults, 1))
+            end
+        },
+        { "When two results are server errors",
+            fun() ->
+                    ServerErrAuthzId1 = test_utils:make_az_id("serverr-01"),
+                    ServerErrAuthzId2 = test_utils:make_az_id("serverr-02"),
+                    OpsResults = [
+                        {ok, test_utils:make_az_id("client-01")},
+                        {error, server_error, ServerErrAuthzId1},
+                        {error, server_error, ServerErrAuthzId2}
+                    ],
+                    Expected = {error, {server_error, [ServerErrAuthzId1, ServerErrAuthzId2]}},
+                    ?assertEqual(Expected, oc_chef_group:handle_error_for_update_ops(OpsResults, 1))
+            end
         }
     ].
 

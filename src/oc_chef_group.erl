@@ -180,7 +180,10 @@ handle_error_for_update_ops(OpsResults, N) ->
     %% of AuthzIds that are forbidden
     case all_forbidden_ids(OpsResults) of
         [] ->
-            length(OpsResults) + N; %% Rename updates at least 1 record
+            case all_server_error_ids(OpsResults) of
+                [] -> length(OpsResults) + N; %% Rename updates at least 1 record
+                ForbiddenIds -> {error, {server_error, ForbiddenIds}}
+            end;
         ForbiddenIds ->
             {error, {forbidden, ForbiddenIds}}
     end.
@@ -215,6 +218,10 @@ authz_id_path(Path, AuthzId) ->
 all_forbidden_ids(Results) ->
     [ AuthzId || {error, forbidden, AuthzId} <- Results ].
 
+%% @doc Extracts a list of authz ids for which Bifrost returns
+%% a 5xx server_error
+all_server_error_ids(Results) ->
+    [ AuthzId || {error, server_error, AuthzId} <- Results ].
 
 parse_binary_json(Bin) ->
     {ok, chef_json:decode_body(Bin)}.
