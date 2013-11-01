@@ -44,7 +44,7 @@ handle_error_test_() ->
                         {error, forbidden, ForbiddenAuthzId},
                         {ok, test_utils:make_az_id("client-03")}
                     ],
-                    Expected = {error, {forbidden, [ForbiddenAuthzId]}},
+                    Expected = {error, error_in_bifrost},
                     ?assertEqual(Expected, oc_chef_group:handle_error_for_update_ops(OpsResults, 1))
             end
         },
@@ -57,7 +57,7 @@ handle_error_test_() ->
                         {error, forbidden, ForbiddenAuthzId1},
                         {error, forbidden, ForbiddenAuthzId2}
                     ],
-                    Expected = {error, {forbidden, [ForbiddenAuthzId1, ForbiddenAuthzId2]}},
+                    Expected = {error, error_in_bifrost},
                     ?assertEqual(Expected, oc_chef_group:handle_error_for_update_ops(OpsResults, 1))
             end
         },
@@ -69,7 +69,7 @@ handle_error_test_() ->
                         {error, forbidden, ForbiddenAuthzId},
                         {error, server_error, test_utils:make_az_id("client-03")}
                     ],
-                    Expected = {error, {forbidden, [ForbiddenAuthzId]}},
+                    Expected = {error, error_in_bifrost},
                     ?assertEqual(Expected, oc_chef_group:handle_error_for_update_ops(OpsResults, 1))
             end
         },
@@ -81,7 +81,7 @@ handle_error_test_() ->
                         {error, server_error, ServerErrAuthzId},
                         {ok, test_utils:make_az_id("client-03")}
                     ],
-                    Expected = {error, {server_error, [ServerErrAuthzId]}},
+                    Expected = {error, error_in_bifrost},
                     ?assertEqual(Expected, oc_chef_group:handle_error_for_update_ops(OpsResults, 1))
             end
         },
@@ -94,7 +94,7 @@ handle_error_test_() ->
                         {error, server_error, ServerErrAuthzId1},
                         {error, server_error, ServerErrAuthzId2}
                     ],
-                    Expected = {error, {server_error, [ServerErrAuthzId1, ServerErrAuthzId2]}},
+                    Expected = {error, error_in_bifrost},
                     ?assertEqual(Expected, oc_chef_group:handle_error_for_update_ops(OpsResults, 1))
             end
         }

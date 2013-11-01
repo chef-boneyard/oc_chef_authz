@@ -187,14 +187,12 @@ add_new_authz_ids({ActorsPath, GroupsPath}, UserSideActorsAuthzIds, GroupAuthzId
 handle_error_for_update_ops(OpsResults, N) ->
     %% If there are forbidden results for any reason, kick off a 403 and a list
     %% of AuthzIds that are forbidden
-    case all_forbidden_ids(OpsResults) of
+    case all_errors(OpsResults) of
         [] ->
-            case all_server_error_ids(OpsResults) of
-                [] -> length(OpsResults) + N; %% Rename updates at least 1 record
-                ForbiddenIds -> {error, {server_error, ForbiddenIds}}
-            end;
-        ForbiddenIds ->
-            {error, {forbidden, ForbiddenIds}}
+            length(OpsResults) + N;
+        Errors ->
+            error_logger:error_report({oc_chef_group, update, error_in_bifrost, Errors}),
+            {error, error_in_bifrost}
     end.
 
 default_to_empty(List) when is_list(List) ->
@@ -222,15 +220,8 @@ sync_authz_id(Method, Path, AuthzId, RequestorId) ->
 authz_id_path(Path, AuthzId) ->
     Path ++ binary_to_list(AuthzId).
 
-%% @doc Extracts a list of authz ids for which Bifrost returns
-%% a 403 forbidden
-all_forbidden_ids(Results) ->
-    [ AuthzId || {error, forbidden, AuthzId} <- Results ].
-
-%% @doc Extracts a list of authz ids for which Bifrost returns
-%% a 5xx server_error
-all_server_error_ids(Results) ->
-    [ AuthzId || {error, server_error, AuthzId} <- Results ].
+all_errors(Results) ->
+    [ Error || {error, _, _} = Error <- Results ].
 
 parse_binary_json(Bin) ->
     {ok, chef_json:decode_body(Bin)}.
