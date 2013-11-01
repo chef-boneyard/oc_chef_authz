@@ -157,23 +157,32 @@ update(#oc_chef_group{
             ClientAuthzIds = find_client_authz_ids(Clients, OrgId, CallbackFun),
             UserAuthzIds = find_user_authz_ids(Users, CallbackFun),
             GroupAuthzIds = find_group_authz_ids(Groups, OrgId, CallbackFun),
-            BasePath = authz_id_path("/groups/", GroupAuthzId),
-            ActorsPath = BasePath ++ "/actors/",
-            GroupsPath = BasePath ++ "/groups/",
             UserSideActorsAuthzIds = UserAuthzIds ++ ClientAuthzIds,
             ActorsToRemove = default_to_empty(AuthSideActors) -- UserSideActorsAuthzIds,
             GroupsToRemove = default_to_empty(AuthSideGroups) -- GroupAuthzIds,
-
+            Paths = build_paths(GroupAuthzId),
             OpsResults = lists:flatten([
-              put_authz_ids(ActorsPath, UserSideActorsAuthzIds, AuthzId),
-              put_authz_ids(GroupsPath, GroupAuthzIds, AuthzId),
-              delete_authz_ids(ActorsPath, ActorsToRemove, AuthzId),
-              delete_authz_ids(GroupsPath, GroupsToRemove, AuthzId)]),
-
+              add_new_authz_ids(Paths, UserSideActorsAuthzIds, GroupAuthzIds, AuthzId),
+              remove_stale_authz_ids(Paths, ActorsToRemove, GroupsToRemove, AuthzId)]),
             handle_error_for_update_ops(OpsResults, N);
        Other  ->
             Other
     end.
+
+build_paths(GroupAuthzId) ->
+    BasePath = authz_id_path("/groups/", GroupAuthzId),
+    ActorsPath = BasePath ++ "/actors/",
+    GroupsPath = BasePath ++ "/groups/",
+    {ActorsPath, GroupsPath}.
+
+remove_stale_authz_ids({ActorsPath, GroupsPath}, ActorsToRemove, GroupsToRemove, AuthzId) ->
+    [delete_authz_ids(ActorsPath, ActorsToRemove, AuthzId),
+     delete_authz_ids(GroupsPath, GroupsToRemove, AuthzId)].
+    
+    
+add_new_authz_ids({ActorsPath, GroupsPath}, UserSideActorsAuthzIds, GroupAuthzIds, AuthzId) ->
+    [put_authz_ids(ActorsPath, UserSideActorsAuthzIds, AuthzId),
+     put_authz_ids(GroupsPath, GroupAuthzIds, AuthzId)].
 
 handle_error_for_update_ops(OpsResults, N) ->
     %% If there are forbidden results for any reason, kick off a 403 and a list
