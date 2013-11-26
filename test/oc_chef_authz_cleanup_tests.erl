@@ -86,7 +86,7 @@ to_binary(List) ->
 expect_delete(Actors, Groups) ->
     meck:delete(oc_chef_authz_http, request, 5),
     meck:expect(oc_chef_authz_http, request,
-                fun("bulk/delete", post, [], InputBody, AzId) ->
+                fun("bulk/_delete", post, [], InputBody, AzId) ->
                         DecodedBody = jiffy:decode(InputBody),
                         Type = ej:get({<<"type">>}, DecodedBody),
                         Collection = lists:sort(ej:get({<<"collection">>}, DecodedBody)),
