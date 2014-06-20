@@ -80,6 +80,18 @@ bulk_get_query() ->
     %% TODO: do we need this?
     ok.
 
+%% for global containers, they have no assoicated org
+new_record(null, AuthzId, ContainerData) ->
+    Name = ej:get({<<"containername">>}, ContainerData),
+    %% TODO write guid generator function for global objects
+    %% (currently only one for objects with assoicated orgs)
+    %% something like:
+    %% Id = chef_object_base:make_global_prefix_id(Name),
+    Id = null,
+    #oc_chef_container{id = Id,
+                       authz_id = AuthzId,
+                       org_id = null,
+                       name = Name};
 new_record(OrgId, AuthzId, ContainerData) ->
     Name = ej:get({<<"containername">>}, ContainerData),
     Id = chef_object_base:make_org_prefix_id(OrgId, Name),
