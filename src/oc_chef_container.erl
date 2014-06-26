@@ -80,13 +80,11 @@ bulk_get_query() ->
     %% TODO: do we need this?
     ok.
 
-%% for global containers, they have no assoicated org
+%% TODO: temporary, remove after organizations are in sql, and dummy global org is created
+%%
+%% for global container migrations, their dummy org will not yet be in sql
 new_record(null, AuthzId, ContainerData) ->
     Name = ej:get({<<"containername">>}, ContainerData),
-    %% TODO write guid generator function for global objects
-    %% (currently only one for objects with assoicated orgs)
-    %% something like:
-    %% Id = chef_object_base:make_global_prefix_id(Name),
     Id = null,
     #oc_chef_container{id = Id,
                        authz_id = AuthzId,
