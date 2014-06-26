@@ -80,6 +80,16 @@ bulk_get_query() ->
     %% TODO: do we need this?
     ok.
 
+%% TODO: temporary, remove after organizations are in sql, and dummy global org is created
+%%
+%% for global container migrations, their dummy org will not yet be in sql
+new_record(null, AuthzId, ContainerData) ->
+    Name = ej:get({<<"containername">>}, ContainerData),
+    Id = null,
+    #oc_chef_container{id = Id,
+                       authz_id = AuthzId,
+                       org_id = null,
+                       name = Name};
 new_record(OrgId, AuthzId, ContainerData) ->
     Name = ej:get({<<"containername">>}, ContainerData),
     Id = chef_object_base:make_org_prefix_id(OrgId, Name),
