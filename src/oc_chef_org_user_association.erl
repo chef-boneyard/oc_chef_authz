@@ -75,33 +75,40 @@ find_query() ->
 list_query() ->
     erlang:error(not_implemented).
 
+list_query(by_org) ->
+    list_org_user_associations;
+list_query(by_id) ->
+    list_user_org_associations.
+
 bulk_get_query() ->
     erlang:error(not_implemented).
 
 fields_for_update(#oc_chef_org_user_association{}) ->
     erlang:error(not_implemented).
 
-fields_for_fetch(#oc_chef_org_user_association{id = OrgId, user_id = UserId}) ->
+fields_for_fetch(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId}) ->
     [OrgId, UserId].
 
 record_fields() ->
     record_info(fields, oc_chef_org_user_association).
 
-list(#oc_chef_org_user_association{id = OrgId, user_id = UserId}, CallbackFun) ->
-    CallbackFun({list_query(), [OrgId, UserId], [name]}).
+list(#oc_chef_org_user_association{org_id = OrgId, user_id = undefined}, CallbackFun) ->
+    CallbackFun({list_query(by_org), [OrgId], [org_id]});
+list(#oc_chef_org_user_association{user_id = UserId, org_id = undefined}, CallbackFun) ->
+    CallbackFun({list_query(by_user), [UserId], [org_id]}).
 
 new_record(OrgId, _AuthzId, Data) ->
     UserId = ej:get({<<"user">>}, Data),
-    #oc_chef_org_user_association{id = OrgId,
+    #oc_chef_org_user_association{org_id = OrgId,
                                   user_id = UserId}.
 
 name(#oc_chef_org_user_association{}) ->
     erlang:error(not_implemented).
 
-id(#oc_chef_org_user_association{id = OrgId, user_id = UserId}) ->
+id(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId}) ->
     [OrgId, UserId].
 
-org_id(#oc_chef_org_user_association{id = OrgId}) ->
+org_id(#oc_chef_org_user_association{org_id = OrgId}) ->
     OrgId.
 
 type_name(#oc_chef_org_user_association{}) ->
