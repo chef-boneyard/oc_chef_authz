@@ -362,52 +362,49 @@ delete_resource(RequestorId, ResourceType, Id) ->
 
 %% Give a resource access to an entity by adding the resource
 %% to the entity's ACE
--spec add_ace_for_entity(requestor_id(), resource_type(), object_id(),
+-spec add_ace_for_entity(requestor_id(), group|actor, object_id(),
                          resource_type(), object_id(), access_method()) ->
     ok | {error, forbidden|not_found|server_error}.
+
 add_ace_for_entity(RequestorId, ResourceType, ResourceId,
                    EntityType, EntityId, Method) ->
-    {ok, ACL} = get_acl_for_resource(RequestorId, EntityType, EntityId),
-    Ace = proplists:get_value(Method, ACL),
-    Members = case ResourceType of
-      group ->
-          Ace#authz_ace.groups;
-      actor ->
-          Ace#authz_ace.actors
-    end,
-    NewMembers = add_if_missing(ResourceId, Members),
-    NewACE = case ResourceType of
-        group ->
-           Ace#authz_ace{groups = NewMembers};
-        actors ->
-           Ace#authz_ace{actors = NewMembers}
-    end,
-    set_ace_for_entity(RequestorId, EntityType, EntityId, Method, NewACE).
+    update_ace_for_entity(RequestorId, ResourceType, ResourceId,
+                          EntityType, EntityId, Method,
+                          fun add_if_missing/2).
 
 %% Deny a resource access to an entity by adding the resource
 %% to the entity's ACE. Note that if the resource has the access to the
 %% same entity via another means, this will not change
--spec remove_ace_for_entity(requestor_id(), resource_type(), object_id(),
+-spec remove_ace_for_entity(requestor_id(), group|actor, object_id(),
                          resource_type(), object_id(), access_method()) ->
     ok | {error, forbidden|not_found|server_error}.
 remove_ace_for_entity(RequestorId, ResourceType, ResourceId,
                       EntityType, EntityId, Method) ->
-    {ok, ACE} = get_ace_for_entity(RequestorId, EntityType, EntityId, Method),
-    Members = case ResourceType of
-      group ->
-          ACE#authz_ace.groups;
-      actor ->
-          ACE#authz_ace.actors
-    end,
-    NewMembers = lists:delete(ResourceId, Members),
-    NewACE = case ResourceType of
-        group ->
-           ACE#authz_ace{groups = NewMembers};
-        actors ->
-           ACE#authz_ace{actors = NewMembers}
-    end,
-    set_ace_for_entity(RequestorId, EntityType, EntityId, Method, NewACE).
+    update_ace_for_entity(RequestorId, ResourceType, ResourceId,
+                          EntityType, EntityId, Method,
+                          fun lists:delete/2).
 
+update_ace_for_entity(RequestorId, ResourceType, ResourceId,
+                   EntityType, EntityId, Method, UpdateFun) ->
+    case get_ace_for_entity(RequestorId, EntityType, EntityId, Method) of
+        {ok, ACE} ->
+            Members = case ResourceType of
+              group ->
+                  ACE#authz_ace.groups;
+              actor ->
+                  ACE#authz_ace.actors
+            end,
+            NewMembers = UpdateFun(ResourceId, Members),
+            NewACE = case ResourceType of
+                group ->
+                   ACE#authz_ace{groups = NewMembers};
+                actors ->
+                   ACE#authz_ace{actors = NewMembers}
+            end,
+            set_ace_for_entity(RequestorId, EntityType, EntityId, Method, NewACE);
+        {error, Error} ->
+            {error, Error}
+    end.
 
 add_if_missing(Item, List) ->
     case lists:member(Item, List) of
@@ -435,8 +432,6 @@ get_acl_for_resource(RequestorId, ResourceType, Id) ->
 
 get_ace_for_entity(RequestorId, AuthzType, Id, AccessMethod) ->
     Url = make_url([pluralize_resource(AuthzType), Id, acl, AccessMethod]),
-    %% jiffy:encode can return an iolist which breaks the http code. This has only been
-    %% observed with floats, but may occur elsewhere.
     case oc_chef_authz_http:request(Url, get, [], [], RequestorId) of
         {ok, Data} ->
             ACE = extract_ace(Data),
