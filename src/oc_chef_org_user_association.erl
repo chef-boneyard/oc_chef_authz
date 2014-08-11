@@ -32,13 +32,19 @@
          name/1,
          id/1,
          org_id/1,
-         type_name/1
+         type_name/1,
+         org_user_association_spec/0
         ]).
 
 -mixin([
         {chef_object, [{default_fetch/2, fetch},
                        {default_update/2, update}]}
        ]).
+
+org_user_association_spec() ->
+    {[
+        {<<"username">>, string}
+    ]}.
 
 authz_id(#oc_chef_org_user_association{}) ->
     erlang:error(not_implemented).
@@ -97,13 +103,25 @@ list(#oc_chef_org_user_association{org_id = OrgId, user_id = undefined}, Callbac
 list(#oc_chef_org_user_association{user_id = UserId, org_id = undefined}, CallbackFun) ->
     CallbackFun({list_query(by_user), [UserId], [org_id]}).
 
+
+% Minor hack, will revisit - not an authz id:
+% Record creation via API. Temporary hack here to
+% capture user id instead of  authz id, so we can
+% use the existing framework.
+new_record(OrgId, {authz_id, UserId},  Data) ->
+    UserName = ej:get({<<"username">>}, Data),
+    #oc_chef_org_user_association{org_id = OrgId,
+                                  user_name = UserName,
+                                  user_id = UserId};
 new_record(OrgId, _AuthzId, Data) ->
+    % Used for record creation during migraions -
+    % user_name ignored here.
     UserId = ej:get({<<"user">>}, Data),
     #oc_chef_org_user_association{org_id = OrgId,
                                   user_id = UserId}.
 
 name(#oc_chef_org_user_association{}) ->
-    erlang:error(not_implemented).
+    user_name.
 
 id(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId}) ->
     [OrgId, UserId].
@@ -112,4 +130,4 @@ org_id(#oc_chef_org_user_association{org_id = OrgId}) ->
     OrgId.
 
 type_name(#oc_chef_org_user_association{}) ->
-    org_user_association.
+    association.
