@@ -59,10 +59,10 @@ statements(pgsql) ->
      {delete_org_user_invite_by_id,
       <<"DELETE FROM org_user_invites WHERE id= $1">>},
      {find_org_user_invite_by_id,
-      <<"SELECT id, org_id, user_id, last_updated_by, created_at, updated_at FROM user_org_invites"
+      <<"SELECT id, org_id, user_id, last_updated_by, created_at, updated_at FROM org_user_invites"
         " WHERE id= $1 LIMIT 1">>},
-     {list_org_user_invites, <<"SELECT id, org_id, user_id FROM user_org_invites WHERE org_id = $1">>},
-     {list_user_org_invites, <<"SELECT id, org_id, user_id FROM user_org_invites WHERE user_id = $1">>},
+     {list_org_user_invites, <<"SELECT id, org_id, user_id FROM org_user_invites WHERE org_id = $1">>},
+     {list_org_user_invites, <<"SELECT id, org_id, user_id FROM org_user_invites WHERE user_id = $1">>},
 
      {insert_org_user_association,
       <<"INSERT INTO org_user_associations (org_id, user_id, last_updated_by, created_at, updated_at)"
@@ -70,10 +70,10 @@ statements(pgsql) ->
      {delete_org_user_association_by_ids,
       <<"DELETE FROM org_user_associations WHERE org_id= $1 AND user_id= $2">>},
      {find_org_user_association_by_ids,
-      <<"SELECT org_id, user_id, last_updated_by, created_at, updated_at FROM user_org_associations"
+      <<"SELECT org_id, user_id, last_updated_by, created_at, updated_at FROM org_user_associations"
         " WHERE org_id= $1 AND user_id= $2">>},
-     {list_user_org_associations, <<"SELECT org_id, user_id FROM user_org_associations WHERE user_id = $1">>},
-     {list_org_user_associations, <<"SELECT org_id, user_id FROM user_org_associations WHERE org_id = $1">>},
+     {list_org_user_associations, <<"SELECT org_id, user_id FROM org_user_associations WHERE user_id = $1">>},
+     {list_org_user_associations, <<"SELECT org_id, user_id FROM org_user_associations WHERE org_id = $1">>},
 
      {insert_organization,
       <<"INSERT INTO orgs (id, authz_id, name, full_name,"
