@@ -18,6 +18,7 @@
          update_from_ejson/2,
          set_created/2,
          set_updated/2,
+         flatten/1,
          create_query/0,
          update_query/0,
          delete_query/0,
@@ -52,6 +53,8 @@ authz_id(#oc_chef_org_user_association{}) ->
 is_indexed() ->
     false.
 
+
+
 ejson_for_indexing(#oc_chef_org_user_association{}, _EjsonTerm) ->
    erlang:error(not_indexed).
 
@@ -85,6 +88,12 @@ list_query(by_org) ->
     list_org_user_associations;
 list_query(by_id) ->
     list_user_org_associations.
+
+flatten(#oc_chef_org_user_association{ org_id = OrgId, user_id = UserId,
+                                       last_updated_by = LastUpdatedBy,
+                                       created_at = CreatedAt,
+                                       updated_at = UpdatedAt} ) ->
+    [OrgId, UserId, LastUpdatedBy, CreatedAt, UpdatedAt].
 
 bulk_get_query() ->
     erlang:error(not_implemented).
