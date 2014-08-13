@@ -49,7 +49,7 @@ statements(pgsql) ->
     [
      {user_in_org,
         <<"SELECT count(*) count FROM users u, org_user_associations a "
-          " WHERE a.user_id = u.user_id "
+          " WHERE a.user_id = u.id"
           "   AND u.username = $1 and a.org_id = $2">>},
 
      {insert_org_user_invite,
@@ -69,8 +69,9 @@ statements(pgsql) ->
      {delete_org_user_association_by_ids,
       <<"DELETE FROM org_user_associations WHERE org_id= $1 AND user_id= $2">>},
      {find_org_user_association_by_ids,
-      <<"SELECT org_id, user_id, last_updated_by, created_at, updated_at FROM org_user_associations"
-        " WHERE org_id= $1 AND user_id= $2">>},
+      <<"SELECT org_id, user_id, username as user_name, last_updated_by, created_at, updated_at"
+        "  FROM org_user_associations a, users u"
+        " WHERE org_id= $1 AND user_id= $2 AND a.user_id = u.id">>},
      {list_org_user_associations, <<"SELECT org_id, user_id FROM org_user_associations WHERE user_id = $1">>},
      {list_org_user_associations, <<"SELECT org_id, user_id FROM org_user_associations WHERE org_id = $1">>},
 
@@ -195,15 +196,10 @@ fetch_container(#oc_chef_authz_context{otto_connection=Server,
     end.
 
 
-fetch_global_group_authz_id(#oc_chef_authz_context{otto_connection=Server, darklaunch = Darklaunch},
+fetch_global_group_authz_id(#oc_chef_authz_context{otto_connection=Server, darklaunch = _Darklaunch} = _C,
                    OrgName, GroupName) ->
-    RealGroupName = io_lib:format("~s_~s", [OrgName, GroupName]),
-    case xdarklaunch_req:is_enabled(<<"couchdb_global_groups">>, Darklaunch) of
-        true ->
-            fetch_group_authz_id_couchdb(Server, undefined, RealGroupName);
-        false ->
-            erlang:error({error, unsupported})
-    end.
+    RealGroupName = lists:flatten(io_lib:format("~s_~s", [OrgName, GroupName])),
+    fetch_group_authz_id_couchdb(Server, undefined, RealGroupName).
 
 fetch_container_couchdb(Server, OrgId, ContainerName) ->
     case fetch_by_name(Server, OrgId, ContainerName, authz_container) of
