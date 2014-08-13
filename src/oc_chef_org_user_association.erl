@@ -99,6 +99,7 @@ bulk_get_query() ->
     erlang:error(not_implemented).
 
 fields_for_update(#oc_chef_org_user_association{}) ->
+    % An association cannot be updated.
     erlang:error(not_implemented).
 
 fields_for_fetch(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId}) ->
@@ -123,14 +124,14 @@ new_record(OrgId, {authz_id, UserId},  Data) ->
                                   user_name = UserName,
                                   user_id = UserId};
 new_record(OrgId, _AuthzId, Data) ->
-    % Used for record creation during migraions -
-    % user_name ignored here.
+    % Used for record creation during migrations -
+    % user_name ignored here since it's not persisted.
     UserId = ej:get({<<"user">>}, Data),
     #oc_chef_org_user_association{org_id = OrgId,
                                   user_id = UserId}.
 
-name(#oc_chef_org_user_association{}) ->
-    user_name.
+name(#oc_chef_org_user_association{user_name = Name}) ->
+    Name.
 
 id(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId}) ->
     [OrgId, UserId].
