@@ -53,12 +53,12 @@ authz_id(#oc_chef_org_user_association{}) ->
 is_indexed() ->
     false.
 
-
-
 ejson_for_indexing(#oc_chef_org_user_association{}, _EjsonTerm) ->
+    % An association cannot be indexed.
    erlang:error(not_indexed).
 
 update_from_ejson(#oc_chef_org_user_association{}, _OrganizationData) ->
+    % An association cannot be updated.
     erlang:error(not_implemented).
 
 set_created(#oc_chef_org_user_association{} = Object, ActorId) ->
@@ -82,7 +82,7 @@ find_query() ->
     find_org_user_association_by_ids.
 
 list_query() ->
-    erlang:error(not_implemented).
+    erlang:error(unused).
 
 list_query(by_org) ->
     list_org_user_associations;
@@ -102,14 +102,14 @@ fields_for_update(#oc_chef_org_user_association{}) ->
     % An association cannot be updated.
     erlang:error(not_implemented).
 
-fields_for_fetch(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId}) ->
-    [OrgId, UserId].
+fields_for_fetch(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId, user_name = UserName}) ->
+    [OrgId, UserId, UserName].
 
 record_fields() ->
     record_info(fields, oc_chef_org_user_association).
 
 list(#oc_chef_org_user_association{org_id = OrgId, user_id = undefined}, CallbackFun) ->
-    CallbackFun({list_query(by_org), [OrgId], [org_id]});
+    CallbackFun({list_query(by_org), [OrgId], [user_name]});
 list(#oc_chef_org_user_association{user_id = UserId, org_id = undefined}, CallbackFun) ->
     CallbackFun({list_query(by_user), [UserId], [org_id]}).
 
