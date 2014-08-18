@@ -82,16 +82,14 @@ add_user_member(#oc_chef_group{users = Users} = Group, NewUser) ->
     Group#oc_chef_group{users = [NewUser] ++ Users}.
 
 remove_user_member(#oc_chef_group{users = Users} = Group, UserToDelete) ->
-    % TODO - is it possible to have more than one of the same user present?
     Group#oc_chef_group{users =  lists:delete(UserToDelete, Users)}.
 
 add_group_member(#oc_chef_group{groups = Groups} = Group, NewGroup) ->
     Group#oc_chef_group{groups = [NewGroup] ++ Groups}.
 
 remove_group_member(#oc_chef_group{groups = Groups} = Group, GroupToDelete) ->
-    % TODO - is it possible to have more than one of the same group present?
     Group#oc_chef_group{groups = lists:delete(GroupToDelete, Groups)}.
-% TODO :
+
 create_query() ->
     insert_group.
 
