@@ -33,9 +33,9 @@
          statements/1
         ]).
 
--ifdef(TEST).
+%-ifdef(TEST).
 -compile([export_all]).
--endif.
+%-endif.
 
 -include("oc_chef_authz.hrl").
 -include("oc_chef_authz_db.hrl").
@@ -61,8 +61,8 @@ statements(pgsql) ->
      {find_org_user_invite_by_id,
       <<"SELECT id, org_id, user_id, last_updated_by, created_at, updated_at FROM org_user_invites"
         " WHERE id= $1 LIMIT 1">>},
-     {list_org_user_invites, <<"SELECT id, org_id, user_id FROM org_user_invites WHERE org_id = $1">>},
-     {list_org_user_invites, <<"SELECT id, org_id, user_id FROM org_user_invites WHERE user_id = $1">>},
+     {list_org_user_invites , <<"SELECT id, org_id, user_id FROM org_user_invites WHERE org_id = $1">>},
+     {list_user_org_invites, <<"SELECT id, org_id, user_id FROM org_user_invites WHERE user_id = $1">>},
 
      {insert_org_user_association,
       <<"INSERT INTO org_user_associations (org_id, user_id, last_updated_by, created_at, updated_at)"
@@ -73,8 +73,17 @@ statements(pgsql) ->
       <<"SELECT org_id, user_id, username as user_name, last_updated_by, created_at, updated_at"
         "  FROM org_user_associations a, users u"
         " WHERE org_id= $1 AND user_id= $2 AND a.user_id = u.id">>},
-     {list_org_user_associations, <<"SELECT org_id, user_id FROM org_user_associations WHERE user_id = $1">>},
-     {list_org_user_associations, <<"SELECT org_id, user_id FROM org_user_associations WHERE org_id = $1">>},
+
+     % TODO for sanity's sake, we're going to need to fix this to join to orgs table and return org name -
+     % org_id not required in usage - will currently require further resolution to return
+     % appropriate org name to caller.
+     {list_user_org_associations, <<"SELECT org_id FROM org_user_associations WHERE user_id = $1">>},
+     % Note here that because an org association isn't an 'object' per se, the form is different -
+     % we just need a list of names.
+     {list_org_user_associations, <<"   SELECT username as user_name"
+                                    "     FROM org_user_associations a, users u"
+                                    "    WHERE org_id = $1 AND a.user_id = u.id"
+                                    " ORDER BY user_name">>},
 
      {insert_organization,
       <<"INSERT INTO orgs (id, authz_id, name, full_name,"
