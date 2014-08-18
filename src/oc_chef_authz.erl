@@ -414,9 +414,9 @@ update_ace_for_entity(RequestorId, ResourceType, ResourceId,
 add_if_missing(Item, List) ->
     case lists:member(Item, List) of
         true ->
-            [Item] ++ List;
+            List;
         false ->
-            List
+            [Item] ++ List
     end.
 
 %
