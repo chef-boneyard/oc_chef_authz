@@ -19,6 +19,7 @@
          set_created/2,
          set_updated/2,
          flatten/1,
+         delete/2,
          create_query/0,
          update_query/0,
          delete_query/0,
@@ -141,3 +142,7 @@ org_id(#oc_chef_org_user_association{org_id = OrgId}) ->
 
 type_name(#oc_chef_org_user_association{}) ->
     association.
+
+delete(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId}, CallbackFun) ->
+    CallbackFun({delete_query(), [OrgId, UserId]}).
+
