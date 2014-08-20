@@ -87,7 +87,7 @@ list_query() ->
 
 list_query(by_org) ->
     list_org_user_associations;
-list_query(by_id) ->
+list_query(by_user) ->
     list_user_org_associations.
 
 flatten(#oc_chef_org_user_association{ org_id = OrgId, user_id = UserId,
@@ -112,7 +112,7 @@ record_fields() ->
 list(#oc_chef_org_user_association{org_id = OrgId, user_id = undefined}, CallbackFun) ->
     CallbackFun({list_query(by_org), [OrgId], [user_name]});
 list(#oc_chef_org_user_association{user_id = UserId, org_id = undefined}, CallbackFun) ->
-    CallbackFun({list_query(by_user), [UserId], [org_id]}).
+    CallbackFun({list_query(by_user), [UserId],  rows}).
 
 
 % Minor hack, will revisit - not an authz id:
