@@ -56,13 +56,23 @@ statements(pgsql) ->
      {insert_org_user_invite,
       <<"INSERT INTO org_user_invites (id, org_id, user_id, last_updated_by, created_at, updated_at)"
         " VALUES ($1, $2, $3, $4, $5, $6)">>},
-     {delete_org_user_invite_by_id,
-      <<"DELETE FROM org_user_invites WHERE id= $1">>},
-     {find_org_user_invite_by_id,
-      <<"SELECT id, org_id, user_id, last_updated_by, created_at, updated_at FROM org_user_invites"
-        " WHERE id= $1 LIMIT 1">>},
-     {list_org_user_invites , <<"SELECT id, org_id, user_id FROM org_user_invites WHERE org_id = $1">>},
-     {list_user_org_invites, <<"SELECT id, org_id, user_id FROM org_user_invites WHERE user_id = $1">>},
+     {delete_org_user_invite_by_id, <<"DELETE FROM org_user_invites WHERE id= $1">>},
+     {find_org_user_invite_by_id, <<"SELECT i.id, org_id, u.id as user_id, o.name as org_name, u.username as user_name, i.last_updated_by, i.created_at, i.updated_at "
+                                    "  FROM org_user_invites i, orgs o, users u "
+                                    " WHERE i.id = $1 "
+                                    "   AND user_id = u.id "
+                                    "   AND org_id = o.id ">>},
+     {list_org_user_invites , <<"SELECT u.username as user_name "
+                                "  FROM org_user_invites i, users u "
+                                " WHERE i.org_id = $1 "
+                                "   AND i.user_id = u.id "
+                                " ORDER BY org_name">>},
+
+     {list_user_org_invites, <<"SELECT o.name as org_name "
+                                "  FROM org_user_invites i, orgs o, users u "
+                                " WHERE i.user_id = $1 "
+                                "   AND i.org_id = o.id "
+                                " ORDER BY org_name">>},
 
      {insert_org_user_association,
       <<"INSERT INTO org_user_associations (org_id, user_id, last_updated_by, created_at, updated_at)"
@@ -74,10 +84,11 @@ statements(pgsql) ->
         "  FROM org_user_associations a, users u"
         " WHERE org_id= $1 AND user_id= $2 AND a.user_id = u.id">>},
 
-     % TODO for sanity's sake, we're going to need to fix this to join to orgs table and return org name -
-     % org_id not required in usage - will currently require further resolution to return
-     % appropriate org name to caller.
-     {list_user_org_associations, <<"SELECT org_id FROM org_user_associations WHERE user_id = $1">>},
+     {list_user_org_associations, <<"SELECT o.name as name, o.full_name as full_name "
+                                    "  FROM org_user_associations a, orgs o"
+                                    " WHERE a.org_id = o.id "
+                                    "   AND user_id = $1">>},
+
      % Note here that because an org association isn't an 'object' per se, the form is different -
      % we just need a list of names.
      {list_org_user_associations, <<"   SELECT username as user_name"
