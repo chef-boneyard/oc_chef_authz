@@ -53,27 +53,28 @@ statements(pgsql) ->
         " WHERE u.id = assoc.user_id AND o.id = assoc.org_id"
         "   AND u.username = $1 AND o.name = $2;">>},
 
+     % Org-user invites
      {insert_org_user_invite,
       <<"INSERT INTO org_user_invites (id, org_id, user_id, last_updated_by, created_at, updated_at)"
         " VALUES ($1, $2, $3, $4, $5, $6)">>},
      {delete_org_user_invite_by_id, <<"DELETE FROM org_user_invites WHERE id= $1">>},
-     {find_org_user_invite_by_id, <<"SELECT i.id, org_id, u.id as user_id, o.name as org_name, u.username as user_name, i.last_updated_by, i.created_at, i.updated_at "
+     {find_org_user_invite_by_id, <<"SELECT i.id id, o.id as org_id, o.name as org_name, u.id as user_id, u.username as user_name, i.last_updated_by, i.created_at, i.updated_at "
                                     "  FROM org_user_invites i, orgs o, users u "
                                     " WHERE i.id = $1 "
                                     "   AND user_id = u.id "
                                     "   AND org_id = o.id ">>},
-     {list_org_user_invites , <<"SELECT u.username as user_name "
+     {list_org_user_invites , <<"SELECT i.id as id, u.username as user_name "
                                 "  FROM org_user_invites i, users u "
                                 " WHERE i.org_id = $1 "
                                 "   AND i.user_id = u.id "
-                                " ORDER BY org_name">>},
-
-     {list_user_org_invites, <<"SELECT o.name as org_name "
+                                " ORDER BY user_name">>},
+     {list_user_org_invites, <<"SELECT i.id as id, o.name as org_name "
                                 "  FROM org_user_invites i, orgs o, users u "
                                 " WHERE i.user_id = $1 "
                                 "   AND i.org_id = o.id "
+                                "   AND u.id = i.user_id "
                                 " ORDER BY org_name">>},
-
+     % Org-user associations
      {insert_org_user_association,
       <<"INSERT INTO org_user_associations (org_id, user_id, last_updated_by, created_at, updated_at)"
         " VALUES ($1, $2, $3, $4, $5)">>},

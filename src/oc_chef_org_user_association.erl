@@ -103,7 +103,8 @@ fields_for_update(#oc_chef_org_user_association{}) ->
     % An association cannot be updated.
     erlang:error(not_implemented).
 
-fields_for_fetch(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId, user_name = UserName}) ->
+fields_for_fetch(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId,
+                                               user_name = UserName}) ->
     [OrgId, UserId, UserName].
 
 record_fields() ->
