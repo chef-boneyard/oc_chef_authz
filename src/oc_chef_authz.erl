@@ -45,7 +45,9 @@
          remove_actor_from_actor_acl/2,
          remove_ace_for_entity/6,
          add_ace_for_entity/6,
-         superuser_id/0
+         superuser_id/0,
+         object_type_to_resource/1,
+         pluralize_resource/1
         ]).
 
 -ifdef(TEST).
@@ -166,7 +168,7 @@ get_container_aid_for_object(Context, OrgId, ObjectType) ->
 create_entity_with_container_acl(RequestorId, ContainerAId, ObjectType) ->
 
     %% Create the entity
-    AuthzType = authz_type_from_container(ObjectType),
+    AuthzType = object_type_to_resource(ObjectType),
     {ok, Id} = create_resource(RequestorId, AuthzType),
 
     %% Ensure it inherits the ACL of its container
@@ -578,13 +580,17 @@ object_type_to_container_name(sandbox)     -> <<"sandboxes">>;
 object_type_to_container_name(search)      -> <<"search">>;
 object_type_to_container_name(user)        -> <<"users">>.
 
-%% @doc When creating a new Authz entity in a given container, we need to ensure we're
-%% creating the correct kind.
-authz_type_from_container(client)    -> 'actor';
-authz_type_from_container(container) -> 'container';
-authz_type_from_container(group)     -> 'group';
-authz_type_from_container(user)      -> 'actor';
-authz_type_from_container(_)         -> 'object'.
+%% @doc The authz system needs to know the resource type as part of the API. This maps chef
+%% object types into their appropriate authz resource types.
+%%
+%% When creating a new Authz entity in a given container, we need to ensure we're creating
+%% the correct kind.
+-spec object_type_to_resource(contained_object_name()) -> atom().
+object_type_to_resource(client)    -> 'actor';
+object_type_to_resource(container) -> 'container';
+object_type_to_resource(group)     -> 'group';
+object_type_to_resource(user)      -> 'actor';
+object_type_to_resource(_)         -> 'object'.
 
 %
 % This exists for testing and debugging; it's too expensive for day to day use.
