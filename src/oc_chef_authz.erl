@@ -575,6 +575,7 @@ object_type_to_container_name(data)        -> <<"data">>; % breaks the simple at
 object_type_to_container_name(environment) -> <<"environments">>;
 object_type_to_container_name(group)       -> <<"groups">>;
 object_type_to_container_name(node)        -> <<"nodes">>;
+object_type_to_container_name(organization) -> <<"organizations">>;
 object_type_to_container_name(role)        -> <<"roles">>;
 object_type_to_container_name(sandbox)     -> <<"sandboxes">>;
 object_type_to_container_name(search)      -> <<"search">>;
