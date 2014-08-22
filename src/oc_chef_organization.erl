@@ -172,7 +172,7 @@ type_name(#oc_chef_organization{}) ->
 %% but we probably for sanity's sake want something less. 255 seems reasonable, but we probably should dig deeper.
 %% For reference, I've succesfully created orgs of 900+ character lengths in hosted, but failed with 1000.
 %% Probably have to be able to handle api.opscode.us/<ORGNAME>/environments/default in 1k?)
--define(ORG_NAME_REGEX, "[.[:alnum:]_-]{1,255}").
+-define(ORG_NAME_REGEX, "[:lower:][:digit:][[:lower:][:digit:]_-]{0,254}").
 -define(FULL_NAME_REGEX, "\S.{0,1022}"). %% Must start with nonspace.
 -define(ANCHOR_REGEX(Regex), "^" ++ Regex ++ "$").
 
