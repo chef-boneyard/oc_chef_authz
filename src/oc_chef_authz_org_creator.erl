@@ -112,8 +112,8 @@ process_policy(#oc_chef_organization{} = Org,
     process_policy(Policy, Org, User, init_cache(Org, User)).
 
 process_policy([PolicyEntry|Policy], Org, User, Cache) ->
-    C = process_policy_step(PolicyEntry, Org, User, Cache),
-    process_policy(Policy, Org, User, Cache).
+    Cache1 = process_policy_step(PolicyEntry, Org, User, Cache),
+    process_policy(Policy, Org, User, Cache1).
 
 process_policy_step({create_containers, List},
                     #oc_chef_organization{id=OrgId}, #chef_user{authz_id=RequestorId}, Cache) ->
@@ -122,7 +122,7 @@ process_policy_step({create_groups, List},
                     #oc_chef_organization{id=OrgId}, #chef_user{authz_id=RequestorId}, Cache) ->
     create_object(OrgId, RequestorId, group, List, Cache);
 process_policy_step({set_acl, ObjectList, ACL},
-                    #oc_chef_organization{id=OrgId}, #chef_user{authz_id=RequestorId}, Cache) ->
+                    #oc_chef_organization{}, #chef_user{authz_id=RequestorId}, Cache) ->
     AObjectList = objectlist_to_authz(Cache, ObjectList),
     AACL = [ace_to_authz(Cache, ACE) || ACE <- ACL],
     %% Note that this list comprehension generates the cross product of objectlist and acl
@@ -132,7 +132,7 @@ process_policy_step({set_acl, ObjectList, ACL},
         {Method, ACE} <- AACL],
     Cache;
 process_policy_step({add_to_groups, Members, Groups},
-                    #oc_chef_organization{id=OrgId}, #chef_user{authz_id=RequestorId}, Cache) ->
+                    #oc_chef_organization{}, #chef_user{}, Cache) ->
     MemberIds = objectlist_to_authz(Cache, Members),
     GroupIds = objectlist_to_authz(Cache, Groups),
     %% TODO capture error return
@@ -141,11 +141,11 @@ process_policy_step({add_to_groups, Members, Groups},
         {Type,MemberId} <- MemberIds],
     Cache;
 process_policy_step({create_org_global_admins},
-                    #oc_chef_organization{id=OrgId, name=OrgName},
+                    #oc_chef_organization{name=OrgName},
                     #chef_user{authz_id=RequestorId}, Cache) ->
     GlobalGroupName = list_to_binary(OrgName ++ "_global_admins"),
     %% TODO: Fix this to be the global groups org id.
-    GlobalOrgId = OrgId,
+    GlobalOrgId = <<"0">>,
     case create_helper(GlobalOrgId, RequestorId, group, GlobalGroupName) of
         AuthzId when is_binary(AuthzId) ->
             add_cache(Cache, {global_admins}, group, AuthzId);
