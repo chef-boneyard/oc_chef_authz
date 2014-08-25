@@ -26,6 +26,7 @@
          delete_query/0,
          find_query/0,
          list_query/0,
+         ejson_from_list/1,
          bulk_get_query/0,
          fields_for_update/1,
          fields_for_fetch/1,
@@ -89,6 +90,10 @@ list_query(by_org) ->
     list_org_user_associations;
 list_query(by_user) ->
     list_user_org_associations.
+
+ejson_from_list(Associations) ->
+   [ {[{ <<"user">>, {[{<<"username">>, Name}]} }]} || Name <- Associations ].
+
 
 flatten(#oc_chef_org_user_association{ org_id = OrgId, user_id = UserId,
                                        last_updated_by = LastUpdatedBy,
