@@ -51,7 +51,7 @@ authz_id(#oc_chef_org_user_invite{}) ->
 valid_response(Response) when is_list(Response) ->
     valid_response(list_to_binary(Response));
 valid_response(Response) when Response == <<"accept">>;
-                              Response == <<"decline">> ->
+                              Response == <<"reject">> ->
     ok;
 valid_response(_) ->
     error.
@@ -73,7 +73,7 @@ to_ejson(#oc_chef_org_user_invite{id = Id, user_name = UserName, org_name = OrgN
       {<<"orgname">>, OrgName},
       {<<"username">>, UserName},
       % Notify that none of these values are here anymore
-      {<<"organization">>, <<"deprecated">>},
+      {<<"organization">>, {[{<<"deprecated">>, true}, {<<"name">>, OrgName}]}},
       {<<"user">>, <<"deprecated">>},
       {<<"organization_admin_actor_id">>, <<"deprecated">>}]}.
 
@@ -127,7 +127,7 @@ validation_spec(create) ->
     {[ {<<"user">>, string} ]};
 validation_spec(response) ->
     {[
-        {<<"response">>,{fun_match, {fun valid_response/1, string, <<"Response must be either 'accept' or 'decline'">>}}}
+        {<<"response">>,{fun_match, {fun valid_response/1, string, <<"Param response must be either 'accept' or 'reject'">>}}}
     ]}.
 
 fields_for_update(#oc_chef_org_user_invite{}) ->
