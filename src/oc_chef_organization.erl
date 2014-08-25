@@ -112,8 +112,8 @@ fields_for_fetch(#oc_chef_organization{id = Id}) ->
 record_fields() ->
     record_info(fields, oc_chef_organization).
 
-list(#oc_chef_organization{id = Id}, CallbackFun) ->
-    CallbackFun({list_query(), [Id], [name]}).
+list(#oc_chef_organization{}, CallbackFun) ->
+    CallbackFun({list_query(), [], [name]}).
 
 parse_binary_json(Bin) ->
     Org0 = chef_json:decode_body(Bin),
