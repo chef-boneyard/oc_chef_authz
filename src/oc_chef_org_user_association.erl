@@ -12,6 +12,7 @@
 -behaviour(chef_object).
 
 -export([
+         parse_binary_json/1,
          authz_id/1,
          is_indexed/0,
          ejson_for_indexing/2,
@@ -34,8 +35,7 @@
          name/1,
          id/1,
          org_id/1,
-         type_name/1,
-         org_user_association_spec/0
+         type_name/1
         ]).
 
 -mixin([
@@ -99,13 +99,21 @@ flatten(#oc_chef_org_user_association{ org_id = OrgId, user_id = UserId,
 bulk_get_query() ->
     erlang:error(not_implemented).
 
+parse_binary_json(Bin) ->
+    EJ = chef_json:decode(Bin),
+    case ej:valid(org_user_association_spec(), EJ) of
+        ok ->
+            {ok, EJ};
+    BadSpec ->
+          throw(BadSpec)
+    end.
+
 fields_for_update(#oc_chef_org_user_association{}) ->
     % An association cannot be updated.
     erlang:error(not_implemented).
 
-fields_for_fetch(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId,
-                                               user_name = UserName}) ->
-    [OrgId, UserId, UserName].
+fields_for_fetch(#oc_chef_org_user_association{org_id = OrgId, user_id = UserId}) ->
+    [OrgId, UserId].
 
 record_fields() ->
     record_info(fields, oc_chef_org_user_association).
