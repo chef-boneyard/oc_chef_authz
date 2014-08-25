@@ -81,7 +81,7 @@ statements(pgsql) ->
      {delete_org_user_association_by_ids,
       <<"DELETE FROM org_user_associations WHERE org_id= $1 AND user_id= $2">>},
      {find_org_user_association_by_ids,
-      <<"SELECT org_id, user_id, username as user_name, last_updated_by, created_at, updated_at"
+      <<"SELECT org_id, user_id, username as user_name, a.last_updated_by, a.created_at, a.updated_at"
         "  FROM org_user_associations a, users u"
         " WHERE org_id= $1 AND user_id= $2 AND a.user_id = u.id">>},
 
