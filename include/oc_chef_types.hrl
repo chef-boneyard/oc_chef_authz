@@ -41,7 +41,7 @@
          }).
 
 -record(oc_chef_org_user_association, {
-          id,
+          org_id,
           user_id,
           last_updated_by,
           created_at,
