@@ -36,6 +36,7 @@
          add_client_to_clients_group/4,
          add_to_group/4,
          bulk_actor_is_authorized/5,
+         create_resource/2,
          delete_resource/3,
          create_entity_if_authorized/4,
          get_container_aid_for_object/3,
