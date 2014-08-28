@@ -27,6 +27,7 @@
 
 -export([container_record_to_authz_id/2,
          fetch_container/3,
+         make_global_admin_group_name/1,
          fetch_global_group_authz_id/3,
          fetch_group_authz_id/3,
          make_context/2,
@@ -220,6 +221,9 @@ fetch_container(#oc_chef_authz_context{otto_connection=Server,
         false ->
             fetch_container_sql(Ctx, OrgId, ContainerName)
     end.
+
+make_global_admin_group_name(OrgName) ->
+  lists:flatten(io_lib:format("~s_global_admins", [OrgName])).
 
 
 fetch_global_group_authz_id(#oc_chef_authz_context{otto_connection=Server, darklaunch = _Darklaunch} = _C,

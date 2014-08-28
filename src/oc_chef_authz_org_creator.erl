@@ -138,7 +138,7 @@ process_policy_step({set_acl, ObjectList, ACL},
         {ResourceType, ResourceId} <- AObjectList,
         {Method, ACE} <- AACL],
     Cache;
-process_policy_step({add_to_groups, Members, Groups},
+process_policy_step({add_to_groups, Type, Members, Groups},
                     #oc_chef_organization{}, #chef_user{}, Cache) ->
     MemberIds = objectlist_to_authz(Cache, Members),
     GroupIds = objectlist_to_authz(Cache, Groups),
@@ -150,9 +150,9 @@ process_policy_step({add_to_groups, Members, Groups},
 process_policy_step({create_org_global_admins},
                     #oc_chef_organization{name=OrgName},
                     #chef_user{authz_id=RequestorId}, Cache) ->
-    GlobalGroupName = list_to_binary(OrgName ++ "_global_admins"),
+    GlobalGroupName = oc_chef_authz_db:make_global_admin_group_name(OrgName),
     %% TODO: Fix this to be the global groups org id.
-    GlobalOrgId = <<"0">>,
+    GlobalOrgId = ?GLOBAL_PLACEHOLDER_ORG_ID,
     case create_helper(GlobalOrgId, RequestorId, group, GlobalGroupName) of
         AuthzId when is_binary(AuthzId) ->
             add_cache(Cache, {global_admins}, group, AuthzId);
@@ -163,7 +163,7 @@ process_policy_step({create_org_global_admins},
 %%
 %% Sequence of operations to create an object in authz and in chef sql.
 %%
-create_object(OrgId, RequestorId, Type, [], Cache) ->
+create_object(_, _, _, [], Cache) ->
     Cache;
 create_object(OrgId, RequestorId, Type, [Name|Remaining], Cache) ->
     case create_helper(OrgId, RequestorId, Type, Name) of
@@ -176,11 +176,13 @@ create_object(OrgId, RequestorId, Type, [Name|Remaining], Cache) ->
             throw(Error)
     end.
 
-create_helper(OrgId, RequestorId, Type, Name) ->
+create_helper(OrgId, RequestorId, Type, Name) when is_atom(Name) ->
     BinaryName = atom_to_binary(Name, utf8),
+    create_helper(OrgId, RequestorId, Type, BinaryName);
+create_helper(OrgId, RequestorId, Type, Name) ->
     case oc_chef_authz:create_resource(RequestorId, Type) of
         {ok, AuthzId} ->
-            create_chef_side(OrgId, RequestorId, Type, BinaryName, AuthzId);
+            create_chef_side(OrgId, RequestorId, Type, Name, AuthzId);
         {error, _} = Error ->
             Error
     end.
