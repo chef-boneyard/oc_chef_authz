@@ -1,6 +1,7 @@
 %% -*- erlang-indent-level: 4;indent-tabs-mode: nil; fill-column: 92 -*-
 %% ex: ts=4 sw=4 et
 %% @author Tyler Cloke <tyler@getchef.com>
+%% @author Mark Anderson <mark@getchef.com>
 %% Copyright 2014 Opscode, Inc. All Rights Reserved.
 
 -module(oc_chef_organization).
@@ -48,13 +49,15 @@
 %% {<<"json_class">>, <<"Chef::Organization">>},
 %% {<<"chef_type">>, <<"organization">>},
 -define(DEFAULT_FIELD_VALUES, [ ]).
+-define(NAME_FIELD, <<"name">>).
+-define(FULL_NAME_FIELD, <<"full_name">>).
 
 -define(VALIDATION_CONSTRAINTS,
-        {[ {<<"name">>, {string_match, regex_for(org_name)}},
-           {<<"full_name">>,  {string_match, regex_for(org_full_name) }}
+        {[ {?NAME_FIELD, {string_match, regex_for(org_name)}},
+           {?FULL_NAME_FIELD,  {string_match, regex_for(org_full_name) }}
          ]}).
 
--define(VALID_KEYS, [<<"name">>, <<"full_name">>]).
+-define(VALID_KEYS, [?NAME_FIELD, ?FULL_NAME_FIELD]).
 
 
 
@@ -68,8 +71,8 @@ ejson_for_indexing(#oc_chef_organization{}, _EjsonTerm) ->
    erlang:error(not_indexed).
 
 update_from_ejson(#oc_chef_organization{} = Organization, OrganizationData) ->
-    Name = ej:get({<<"name">>}, OrganizationData),
-    FullName = ej:get({<<"fullname">>}, OrganizationData),
+    Name = ej:get({?NAME_FIELD}, OrganizationData),
+    FullName = ej:get({?FULL_NAME_FIELD}, OrganizationData),
     Organization#oc_chef_organization{name = Name, full_name = FullName}.
 
 set_created(#oc_chef_organization{} = Organization, ActorId) ->
@@ -132,8 +135,8 @@ validate_org(Org) ->
 %%
 assemble_organization_ejson(#oc_chef_organization{name = Name,
                                                   full_name = FullName}) ->
-    Org = {[{<<"name">>, Name},
-            {<<"full_name">>, FullName} ]},
+    Org = {[{?NAME_FIELD, Name},
+            {?FULL_NAME_FIELD, FullName} ]},
     chef_object_base:set_default_values(Org, ?DEFAULT_FIELD_VALUES).
 
 new_record(null, AuthzId, OrganizationData) ->
@@ -141,8 +144,8 @@ new_record(null, AuthzId, OrganizationData) ->
     % and oc_chef_group:new_record for examples)
     Id = null,
 
-    Name = ej:get({<<"name">>}, OrganizationData),
-    FullName = ej:get({<<"full_name">>}, OrganizationData),
+    Name = ej:get({?NAME_FIELD}, OrganizationData),
+    FullName = ej:get({?FULL_NAME_FIELD}, OrganizationData),
     AssignedAt = ej:get({<<"assigned_at">>}, OrganizationData),
     #oc_chef_organization{
        id = Id,
