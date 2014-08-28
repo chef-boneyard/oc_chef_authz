@@ -163,6 +163,8 @@ process_policy_step({create_org_global_admins},
 %%
 %% Sequence of operations to create an object in authz and in chef sql.
 %%
+create_object(OrgId, RequestorId, Type, [], Cache) ->
+    Cache;
 create_object(OrgId, RequestorId, Type, [Name|Remaining], Cache) ->
     case create_helper(OrgId, RequestorId, Type, Name) of
         AuthzId when is_binary(AuthzId) ->
@@ -188,7 +190,7 @@ create_chef_side(OrgId, RequestorId,  container, Name, AuthzId) ->
     Object =chef_object:new_record(oc_chef_container, OrgId, AuthzId, Data),
     create_insert(Object, AuthzId, RequestorId);
 create_chef_side(OrgId, RequestorId, group, Name, AuthzId) ->
-    Data = ej:set({<<"name">>}, {[]}, Name),
+    Data = ej:set({<<"groupname">>}, {[]}, Name),
     Object = chef_object:new_record(oc_chef_group, OrgId, AuthzId, Data),
     create_insert(Object, AuthzId, RequestorId).
 
