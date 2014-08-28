@@ -118,8 +118,7 @@ list(#oc_chef_organization{}, CallbackFun) ->
 parse_binary_json(Bin) ->
     Org0 = chef_json:decode_body(Bin),
     Org = chef_object_base:set_default_values(Org0, ?DEFAULT_FIELD_VALUES),
-    {ok, ValidOrg} = validate_org(Org), %% TODO need action specific version?
-    ValidOrg.
+    validate_org(Org). %% TODO need action specific version?
 
 validate_org(Org) ->
     case ej:valid(?VALIDATION_CONSTRAINTS, Org) of
