@@ -139,14 +139,14 @@ assemble_organization_ejson(#oc_chef_organization{name = Name,
             {?FULL_NAME_FIELD, FullName} ]},
     chef_object_base:set_default_values(Org, ?DEFAULT_FIELD_VALUES).
 
-new_record(null, AuthzId, OrganizationData) ->
-    % TODO: write id generator for org-less objects (see chef_object_base:make_org_prefix_id
-    % and oc_chef_group:new_record for examples)
-    Id = null,
+new_record(_OrgId, AuthzId, OrganizationData) ->
+    Id = chef_object_base:make_guid(),
 
     Name = ej:get({?NAME_FIELD}, OrganizationData),
     FullName = ej:get({?FULL_NAME_FIELD}, OrganizationData),
-    AssignedAt = ej:get({<<"assigned_at">>}, OrganizationData),
+    %% should default date be factored elsewhere? Other dates are set in chef_object_base.
+    %% Also, does assigned at really make sense when org creation is done in one step?
+    AssignedAt = ej:get({<<"assigned_at">>}, OrganizationData, chef_object_base:sql_date(now)),
     #oc_chef_organization{
        id = Id,
        authz_id = AuthzId,
