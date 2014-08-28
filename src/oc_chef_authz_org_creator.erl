@@ -79,28 +79,35 @@ init_cache(#oc_chef_organization{authz_id=OrgAuthzId},
     InsertFun = fun({Item,AuthzId}, Acc) ->
                         add_cache(Acc, Item, AuthzId)
                 end,
-    lists:foldl(InsertFun, maps:new(), Elements).
+    lists:foldl(InsertFun, dict:new(), Elements).
 
 add_cache(C, Object, Type, AuthzId) ->
-    maps:put(Object, {Type, AuthzId}, C).
+    set(Object, {Type, AuthzId}, C).
 
 add_cache(C, {Type, Object}, AuthzId) ->
     Resource = oc_chef_authz:object_type_to_resource(Type),
-    maps:put({Type, Object}, {Resource, AuthzId}, C);
+    set({Type, Object}, {Resource, AuthzId}, C);
 add_cache(C, {Type}, AuthzId) ->
     Resource = oc_chef_authz:object_type_to_resource(Type),
-    maps:put({Type}, {Resource, AuthzId}, C).
+    set({Type}, {Resource, AuthzId}, C).
 
 objectlist_to_authz(C, ObjectList) ->
-    [maps:get(O,C) || O <- lists:flatten(ObjectList)].
+    [find(O,C) || O <- lists:flatten(ObjectList)].
 
 objectlist_to_authz(C, Type, BareObjectList) ->
-    [maps:get({Type,O},C) || O <- lists:flatten(BareObjectList)].
+    [find({Type,O},C) || O <- lists:flatten(BareObjectList)].
 
 ace_to_authz(C, {Method, Actors, Groups}) ->
     {_, ActorIds} = lists:unzip(objectlist_to_authz(C, user, Actors)),
     {_, GroupIds} = lists:unzip(objectlist_to_authz(C, group, Groups)),
     {Method, #authz_ace{actors=ActorIds,groups=GroupIds}}.
+
+set(Key, Value, C) ->
+    dict:store(Key,Value, C).
+
+find(Key, C) ->
+    {ok, Value} = dict:find(Key,C),
+    Value.
 
 %%
 %% Execute a policy to create an org
