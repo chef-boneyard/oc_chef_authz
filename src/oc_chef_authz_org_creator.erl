@@ -33,11 +33,6 @@
 -include_lib("eunit/include/eunit.hrl").
 %-endif.
 
-%% A very simple, low level description for an org. This is a short
-%% term fix, to get the minimal org creation working. We should
-%% come up with a better descriptive system for describing org policy,
-%% such as what was done in mixlib-authorization.
-%%
 -define(CONTAINERS, [clients, containers, cookbooks, data, environments,
                      groups, nodes, roles, sandboxes]).
 
@@ -45,6 +40,33 @@
 
 -define(ALL_PERMS, [create, read, update, delete, grant]).
 
+%%
+%% We use a simple declarative language to describe permissions. This could use some
+%% cleanup, but eventually something like this could be uploaded as JSON, and users
+%% could select the org policy on creation
+%%
+%% This probably sufficient for Chef 12, but there's some enhancements that would be nice
+%% for future chef versions
+%%
+%% TODO (future work)
+%% * Decide if we need an explicit superuser in this syntax. Right now the 'creator' user is
+%%   assumed to be the superuser (pivotal). If we use the 'superuser' that is provided in the
+%%   config file we need to be able to handle multiple such users. Disambiguating the creator
+%%   would help us move more of the policy of org creation out of webui.
+%% * It would be nice to provide an api that retroactively enforces a policy on an org; especially
+%%   would be useful to fix broken orgs.
+%% * The DEFAULT_EC_EXPANDED_ORG policy represents EC, we should write a policy that resembles OSC.
+%% * Document this language a bit more thoroughly
+%% * This might be expanded to cover other large org policy features
+%%   * default starting group for users
+%%   * special users added to every org (associated, and with permissions)
+%%
+%% Performance enhancements. The default policy takes about 2 seconds on an unloaded dev-vm.
+%% * Look at bulk APIs to support this
+%% * Look at parallel execution of bifrost stuff; we could divide it into three phases:
+%%   * Object creation (parallel)
+%%   * Group population (parallel, but for efficiency should probably not update a group simulaneously
+%%   * ACL population (parallel, probably should not update ACL simulaneously)
 -define(DEFAULT_EC_EXPANDED_ORG,
         [{create_containers, ?CONTAINERS},
          {create_groups, ?GROUPS},
@@ -57,6 +79,11 @@
           [
            %% Billing admins is very restrictive.
            {add_acl, [{group, 'billing-admins'}], [read,update], [{user, creator}]},
+
+           %% Creator (superuser normally) goes everywhere
+           {add_acl,
+            [mk_tl(container, ?CONTAINERS), mk_tl(group, ?GROUPS), {organization}],
+            ?ALL_PERMS, [{user, creator}]},
 
            %% Admins
            {add_acl,
@@ -107,8 +134,6 @@ process_policy([], _, _, Cache) ->
 process_policy([PolicyEntry|Policy], Org, User, Cache) ->
     {Cache1, Steps} = process_policy_step(PolicyEntry, Org, User, Cache),
     process_policy(Steps++Policy, Org, User, Cache1).
-
-
 
 %% Returns a tuple of updated cache, and expanded steps to process
 %%
