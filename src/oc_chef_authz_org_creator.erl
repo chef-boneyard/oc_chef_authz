@@ -44,8 +44,8 @@
                               groups, nodes, roles, sandboxes]},
          {create_groups, [admins, 'billing-admins', clients, users]},
          {create_org_global_admins},
-         {add_to_groups, users, [org_creator], [admins, 'billing-admins']},
-         {add_to_groups, groups, [admins], [org_global_admins]},
+         {add_to_groups, user, [creator], [admins, 'billing-admins']},
+         {add_to_groups, group, [admins], [global_admins]},
          {set_acl, [{group, 'billing-admins'}],
           [{create, [creator], []},
            {read, [creator], ['billing-admins']},
@@ -155,7 +155,7 @@ process_policy_step({create_org_global_admins},
     GlobalOrgId = ?GLOBAL_PLACEHOLDER_ORG_ID,
     case create_helper(GlobalOrgId, RequestorId, group, GlobalGroupName) of
         AuthzId when is_binary(AuthzId) ->
-            add_cache(Cache, {global_admins}, group, AuthzId);
+            add_cache(Cache, {group, global_admins}, group, AuthzId);
         Error ->
              throw(Error)
     end.
