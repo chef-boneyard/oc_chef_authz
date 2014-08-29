@@ -102,7 +102,7 @@ superuser_id() ->
 requestor_or_superuser(superuser) ->
     superuser_id();
 requestor_or_superuser(ObjectId) ->
-    ObjectId().
+    ObjectId.
 
 %% @doc Creates a new Authz entity, if the requestor has the necessary permissions.
 %%
