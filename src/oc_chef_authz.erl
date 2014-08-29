@@ -46,6 +46,7 @@
          remove_actor_from_actor_acl/2,
          remove_ace_for_entity/6,
          add_ace_for_entity/6,
+         set_ace_for_entity/5,
          superuser_id/0,
          object_type_to_resource/1,
          pluralize_resource/1
