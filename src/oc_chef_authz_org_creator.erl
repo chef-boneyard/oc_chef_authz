@@ -106,8 +106,12 @@ set(Key, Value, C) ->
     dict:store(Key,Value, C).
 
 find(Key, C) ->
-    {ok, Value} = dict:find(Key,C),
-    Value.
+    case dict:find(Key,C) of
+        {ok, Value} -> Value;
+        error ->
+            lager:error("Error processing org creation policy, no definition found for ~p", [Key]),
+            throw( {error, bad_org_creation_policy})
+    end.
 
 %%
 %% Execute a policy to create an org
@@ -118,6 +122,8 @@ process_policy(#oc_chef_organization{} = Org,
                Policy) ->
     process_policy(Policy, Org, User, init_cache(Org, User)).
 
+process_policy([], _, _, _) ->
+    Cache;
 process_policy([PolicyEntry|Policy], Org, User, Cache) ->
     Cache1 = process_policy_step(PolicyEntry, Org, User, Cache),
     process_policy(Policy, Org, User, Cache1).
@@ -138,10 +144,10 @@ process_policy_step({set_acl, ObjectList, ACL},
         {ResourceType, ResourceId} <- AObjectList,
         {Method, ACE} <- AACL],
     Cache;
-process_policy_step({add_to_groups, Type, Members, Groups},
+process_policy_step({add_to_groups, ActorType, Members, Groups},
                     #oc_chef_organization{}, #chef_user{}, Cache) ->
-    MemberIds = objectlist_to_authz(Cache, Members),
-    GroupIds = objectlist_to_authz(Cache, Groups),
+    MemberIds = objectlist_to_authz(Cache, ActorType, Members),
+    GroupIds = objectlist_to_authz(Cache, group, Groups),
     %% TODO capture error return
     [oc_chef_authz:add_to_group(GroupId, Type, MemberId, superuser) ||
         {_, GroupId} <- GroupIds,
