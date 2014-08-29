@@ -225,7 +225,6 @@ create_insert(Object, AuthzId, RequestorId) ->
 
 %%
 %% Helper for creating acls. It's very tedious to write them all out longhand.
-%% {add, Objects, Actions, Members}
 %%
 %% We keep the human readable names throughout this expansion.  We could probably be more
 %% efficient to translate to authz ids earlier, at the cost of a lot of readability
@@ -233,11 +232,17 @@ process_acls(AclDesc) ->
     AclMap = lists:foldl(fun update_acl_step/2, dict:new(), lists:flatten(AclDesc)),
     [{set_acl_expanded, Object, Acl} || {Object, Acl} <- dict:to_list(AclMap)].
 
-%% {add, Objects, Actions, Members}
-%% Objects: {type, Name} pairs
-%% Methods: CRUDG
-%% Members: {user|group, name}
+%% Syntax: 
+%% {add_acl, Objects, Actions, Members}
+%%
+%% Objects: [{type, Name} ...]
+%% Actions: List of actions to permit (create, read, update, delete, grant)
+%% Members: {user|client|group, name}
 %% Adds cross product to existing world
+%%
+%% TODO: There's a lot of common code for ACLs between the ACL endpoint and here.
+%% We should extract that code, and expose it as programmatic API for ACL manipulation for
+%% use in the future orgmapper replacement.
 update_acl_step({add_acl, Objects, Actions, Members}, Acls) ->
     %% split out actors and groups separately
     {Clients, Users, Groups} = lists:foldl(
@@ -300,6 +305,11 @@ add_to_ace(#hr_ace{clients=OClients, users=OUsers, groups=OGroups},
 %%
 %% Simple cache for managing object-> authzid mapping.
 %%
+%% This is 'scoped' in terms of the org being created, and the  entries
+%% here implicitly contain the org id.
+%% Most objects are {Type, Name} pairs, such as {user, creator} or {container, nodes}
+%% and are mapped to {ResourceType, AuthzId} pairs (e.g. {object, a452dfadsfa} )
+
 init_cache(#oc_chef_organization{authz_id=OrgAuthzId},
            #chef_user{authz_id=CreatorAuthzId}) ->
     %% Notes: we assume the creator is a superuser;
