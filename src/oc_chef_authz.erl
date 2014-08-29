@@ -470,11 +470,12 @@ get_ace_for_entity(RequestorId, AuthzType, Id, AccessMethod) ->
                                          {error, any()}.
 set_ace_for_entity(RequestorId, AuthzType, Id, AccessMethod,
                    #authz_ace{actors=Actors, groups=Groups}) ->
+    EffectiveRequestorId = requestor_or_superuser(RequestorId),
     Url = make_url([pluralize_resource(AuthzType), Id, acl, AccessMethod]),
     %% jiffy:encode can return an iolist which breaks the http code. This has only been
     %% observed with floats, but may occur elsewhere.
     Body = iolist_to_binary(jiffy:encode({[{<<"actors">>, Actors}, {<<"groups">>, Groups}]})),
-    case oc_chef_authz_http:request(Url, put, [], Body, RequestorId) of
+    case oc_chef_authz_http:request(Url, put, [], Body, EffectiveRequestorId) of
         ok -> ok;
         %% Expected errors are forbidden, not_found, server_error
         {error, Error} -> {error, Error}
