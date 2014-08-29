@@ -370,8 +370,9 @@ create_resource(RequestorId, ResourceType) ->
 -spec delete_resource(requestor_id(), 'actor'|'group'|'object', object_id())
                      ->  ok | {error, forbidden|not_found|server_error}.
 delete_resource(RequestorId, ResourceType, Id) ->
+    EffectiveRequestorId = requestor_or_superuser(RequestorId),
     Url = make_url([pluralize_resource(ResourceType), Id]),
-    case oc_chef_authz_http:request(Url, delete, [], [], RequestorId) of
+    case oc_chef_authz_http:request(Url, delete, [], [], EffectiveRequestorId) of
         ok -> ok;
         %% Expected errors are forbidden, not_found, server_error
         {error, Error} -> {error, Error}
