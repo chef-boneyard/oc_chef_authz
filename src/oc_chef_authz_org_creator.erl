@@ -122,7 +122,7 @@ process_policy(#oc_chef_organization{} = Org,
                Policy) ->
     process_policy(Policy, Org, User, init_cache(Org, User)).
 
-process_policy([], _, _, _) ->
+process_policy([], _, _, Cache) ->
     Cache;
 process_policy([PolicyEntry|Policy], Org, User, Cache) ->
     Cache1 = process_policy_step(PolicyEntry, Org, User, Cache),
