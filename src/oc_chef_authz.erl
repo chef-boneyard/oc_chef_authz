@@ -390,22 +390,22 @@ remove_ace_for_entity(RequestorId, ResourceType, ResourceId,
                           fun lists:delete/2).
 
 update_ace_for_entity(RequestorId, ResourceType, ResourceId,
-                   EntityType, EntityId, Method, UpdateFun) ->
+                      EntityType, EntityId, Method, UpdateFun) ->
     case get_ace_for_entity(RequestorId, EntityType, EntityId, Method) of
         {ok, ACE} ->
             Members = case ResourceType of
-              group ->
-                  ACE#authz_ace.groups;
-              actor ->
-                  ACE#authz_ace.actors
-            end,
+                          group ->
+                              ACE#authz_ace.groups;
+                          actor ->
+                              ACE#authz_ace.actors
+                      end,
             NewMembers = UpdateFun(ResourceId, Members),
             NewACE = case ResourceType of
-                group ->
-                   ACE#authz_ace{groups = NewMembers};
-                actors ->
-                   ACE#authz_ace{actors = NewMembers}
-            end,
+                         group ->
+                             ACE#authz_ace{groups = NewMembers};
+                         actors ->
+                             ACE#authz_ace{actors = NewMembers}
+                     end,
             set_ace_for_entity(RequestorId, EntityType, EntityId, Method, NewACE);
         {error, Error} ->
             {error, Error}
