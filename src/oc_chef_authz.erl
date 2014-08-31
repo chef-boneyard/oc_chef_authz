@@ -403,7 +403,7 @@ update_ace_for_entity(RequestorId, ResourceType, ResourceId,
             NewACE = case ResourceType of
                          group ->
                              ACE#authz_ace{groups = NewMembers};
-                         actors ->
+                         actor ->
                              ACE#authz_ace{actors = NewMembers}
                      end,
             set_ace_for_entity(RequestorId, EntityType, EntityId, Method, NewACE);
