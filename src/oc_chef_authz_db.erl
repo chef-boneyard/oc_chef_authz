@@ -30,6 +30,7 @@
          make_global_admin_group_name/1,
          fetch_global_group_authz_id/3,
          fetch_group_authz_id/3,
+         fetch_group_sql/3,
          make_context/2,
          statements/1
         ]).
@@ -41,6 +42,12 @@
 -include("oc_chef_authz.hrl").
 -include("oc_chef_authz_db.hrl").
 -include_lib("sqerl/include/sqerl.hrl").
+
+%% TODO Fix:
+%% -include_lib("chef_objects/include/chef_types.hrl").
+%% can't include this because it also defines object_id
+%% So copied this over for the short term.
+-define(GLOBAL_PLACEHOLDER_ORG_ID, <<"00000000000000000000000000000000">>).
 
 -define(gv(Key, PList), proplists:get_value(Key, PList)).
 -define(user_db, "opscode_account").
@@ -401,6 +408,43 @@ fetch_group_authz_id_sql(#oc_chef_authz_context{reqid = ReqId}, OrgId, Name) ->
                           end) of
         #oc_chef_group{authz_id = AuthzId} ->
             AuthzId;
+        not_found ->
+            {not_found, authz_group};
+        {error, _} = Error ->
+            Error
+    end.
+
+
+%% TODO: refactor, clean this up
+%% We need a clean api for fetching a group w/o expansion of members
+%% We need a clean api for fetching the global admins group, but we may not need to be able to do
+%% it from couchdb.
+%% Look
+%%  * in oc_chef_wm_associations and invites
+%%  * in oc_chef_authz_groups
+%%  * in oc_chef_organization_policy
+%%
+fetch_global_admins(#oc_chef_authz_context{otto_connection=_Server,
+                                           darklaunch = Darklaunch} = Ctx,
+                    OrgName) ->
+    GlobalGroupName = make_global_admin_group_name(OrgName),
+    case xdarklaunch_req:is_enabled(<<"couchdb_groups">>, Darklaunch) of
+        true ->
+            throw({not_implemented, fetch_global_admins_couch});
+        false ->
+            fetch_group_sql(Ctx, ?GLOBAL_PLACEHOLDER_ORG_ID, GlobalGroupName)
+    end.
+
+fetch_group_sql(#oc_chef_authz_context{reqid = ReqId}, OrgId, Name) ->
+    case stats_hero:ctime(ReqId, {chef_sql, fetch},
+                          fun() ->
+                                  chef_object:default_fetch(#oc_chef_group{
+                                                               org_id = OrgId,
+                                                               name = Name},
+                                                            fun chef_sql:select_rows/1)
+                          end) of
+        #oc_chef_group{} = Group ->
+            Group;
         not_found ->
             {not_found, authz_group};
         {error, _} = Error ->
