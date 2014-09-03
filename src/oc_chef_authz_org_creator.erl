@@ -130,7 +130,7 @@ process_policy(#oc_chef_organization{} = Org,
                Policy) ->
     process_policy(Policy, Org, User, init_cache(Org, User)).
 
-process_policy([], _, _, Cache) ->
+process_policy([], _, _, _Cache) ->
     %% This is where we might extract some stuff from cache to descibe the created org
     ok;
 process_policy([PolicyEntry|Policy], Org, User, Cache) ->
@@ -194,7 +194,7 @@ create_object(OrgId, RequestorId, Type, [Name|Remaining], Cache) ->
         Error ->
             %% Do we clean up created authz stuff here, or save it for
             %% general org deletion routine later?
-            lager:error("Could not create object ~p during creation of org ~s", 
+            lager:error("Could not create object ~p during creation of org ~s",
                         [{Type, Name}, OrgId]),
             throw(Error)
     end.
@@ -237,7 +237,7 @@ process_acls(AclDesc) ->
     AclMap = lists:foldl(fun update_acl_step/2, dict:new(), lists:flatten(AclDesc)),
     [{set_acl_expanded, Object, Acl} || {Object, Acl} <- dict:to_list(AclMap)].
 
-%% Syntax: 
+%% Syntax:
 %% {add_acl, Objects, Actions, Members}
 %%
 %% Objects: [{type, Name} ...]
