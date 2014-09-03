@@ -174,8 +174,16 @@ type_name(#oc_chef_organization{}) ->
 %% but we probably for sanity's sake want something less. 255 seems reasonable, but we probably should dig deeper.
 %% For reference, I've succesfully created orgs of 900+ character lengths in hosted, but failed with 1000.
 %% Probably have to be able to handle api.opscode.us/<ORGNAME>/environments/default in 1k?)
--define(ORG_NAME_REGEX, "[[:lower:][:digit:]][[:lower:][:digit:]_-]{0,254}").
--define(FULL_NAME_REGEX, "\\S.{0,1022}"). %% Must start with nonspace.
+%%
+%% We use [a-z] instead of [:lower:] because the latter can change meaning if we set PCRE_UCP when compiling the regex.
+%%
+%% The org name is stricter than the lb allows (right now; it doesn't block upper/digit/-_ for first character)
+%% This strictness matches the previous ruby implementation, except that it didn't limit the length.
+-define(ORG_NAME_REGEX, "[a-z0-9][a-z0-9_-]{0,254}").
+%%
+%% Full name is free text, except that it must start with nonspace.
+%%
+-define(FULL_NAME_REGEX, "\\S.{0,1022}"). 
 -define(ANCHOR_REGEX(Regex), "^" ++ Regex ++ "$").
 
 generate_regex(Pattern) ->
