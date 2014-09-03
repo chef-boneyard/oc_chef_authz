@@ -114,6 +114,7 @@ mk_tl(Type, List) ->
 %%
 %%
 
+-spec create_org(#oc_chef_organization{}, #chef_user{}) -> ok.
 create_org(Org, CreatingUser) ->
     create_org(Org, CreatingUser, ?DEFAULT_EC_EXPANDED_ORG).
 
@@ -130,10 +131,14 @@ process_policy(#oc_chef_organization{} = Org,
     process_policy(Policy, Org, User, init_cache(Org, User)).
 
 process_policy([], _, _, Cache) ->
-    Cache;
+    %% This is where we might extract some stuff from cache to descibe the created org
+    ok;
 process_policy([PolicyEntry|Policy], Org, User, Cache) ->
-    {Cache1, Steps} = process_policy_step(PolicyEntry, Org, User, Cache),
-    process_policy(Steps++Policy, Org, User, Cache1).
+    case process_policy_step(PolicyEntry, Org, User, Cache) of
+        {error, _} = Error -> Error;
+        {Cache1, Steps} ->
+            process_policy(Steps++Policy, Org, User, Cache1)
+    end.
 
 %% Returns a tuple of updated cache, and expanded steps to process
 %%
