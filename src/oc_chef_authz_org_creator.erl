@@ -71,14 +71,14 @@
         [{create_containers, ?CONTAINERS},
          {create_groups, ?GROUPS},
          {create_org_global_admins},
-         {add_to_groups, user, [creator], [admins, 'billing-admins']},
+         {add_to_groups, user, [creator], [admins, users]},
          {add_to_groups, group, [admins], [global_admins]},
 
          %% ACLs are expanded, then applied
          {acls,
           [
            %% Billing admins is very restrictive.
-           {add_acl, [{group, 'billing-admins'}], [read,update], [{user, creator}]},
+           {add_acl, [{group, 'billing-admins'}], [read,update], [{user, creator},{group, 'billing-admins'}]},
 
            %% Creator (superuser normally) goes everywhere
            {add_acl,
