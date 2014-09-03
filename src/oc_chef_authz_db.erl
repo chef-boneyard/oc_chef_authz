@@ -232,11 +232,18 @@ fetch_container(#oc_chef_authz_context{otto_connection=Server,
 make_global_admin_group_name(OrgName) ->
   lists:flatten(io_lib:format("~s_global_admins", [OrgName])).
 
-
-fetch_global_group_authz_id(#oc_chef_authz_context{otto_connection=Server, darklaunch = _Darklaunch} = _C,
-                   OrgName, GroupName) ->
+%% TODO: the only global groups are global admins groups and this should only be used for those
+fetch_global_group_authz_id(#oc_chef_authz_context{otto_connection=Server, darklaunch = Darklaunch} = Ctx,
+                            OrgName, GroupName) ->
     RealGroupName = lists:flatten(io_lib:format("~s_~s", [OrgName, GroupName])),
-    fetch_group_authz_id_couchdb(Server, undefined, RealGroupName).
+    %% global admins are strictly related to organizations, so we'll trigger
+    %% whether the global admins group is in sql depending on where the org is
+    case xdarklaunch_req:is_enabled(<<"couchdb_organizations">>, Darklaunch) of
+        true ->
+            fetch_group_authz_id_couchdb(Server, undefined, RealGroupName);
+        false ->
+            fetch_group_authz_id_sql(Ctx, ?GLOBAL_PLACEHOLDER_ORG_ID, RealGroupName)
+    end.
 
 fetch_container_couchdb(Server, OrgId, ContainerName) ->
     case fetch_by_name(Server, OrgId, ContainerName, authz_container) of
