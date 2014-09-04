@@ -114,7 +114,7 @@ mk_tl(Type, List) ->
 %%
 %%
 
--spec create_org(#oc_chef_organization{}, #chef_user{}) -> ok.
+-spec create_org(#oc_chef_organization{}, #chef_user{}) -> ok | {error, any()}.
 create_org(Org, CreatingUser) ->
     create_org(Org, CreatingUser, ?DEFAULT_EC_EXPANDED_ORG).
 
@@ -171,13 +171,12 @@ process_policy_step({create_org_global_admins},
     GlobalGroupName = oc_chef_authz_db:make_global_admin_group_name(OrgName),
     %% TODO: Fix this to be the global groups org id.
     GlobalOrgId = ?GLOBAL_PLACEHOLDER_ORG_ID,
-    Cache1 = case create_helper(GlobalOrgId, RequestorId, group, GlobalGroupName) of
-                 AuthzId when is_binary(AuthzId) ->
-                     add_cache(Cache, {group, global_admins}, group, AuthzId);
-                 Error ->
-                     throw(Error)
-             end,
-    {Cache1, []};
+    case create_helper(GlobalOrgId, RequestorId, group, GlobalGroupName) of
+        AuthzId when is_binary(AuthzId) ->
+            {add_cache(Cache, {group, global_admins}, group, AuthzId), []};
+        Error ->
+            {error, Error}
+    end;
 process_policy_step({acls, Steps}, _Org, _User, Cache) ->
     {Cache, process_acls(Steps)}.
 
@@ -334,9 +333,6 @@ add_cache(C, {Type, Object}, AuthzId) ->
 add_cache(C, {Type}, AuthzId) ->
     Resource = oc_chef_authz:object_type_to_resource(Type),
     set({Type}, {Resource, AuthzId}, C).
-
-objectlist_to_authz(C, ObjectList) ->
-    [find(O,C) || O <- lists:flatten(ObjectList)].
 
 objectlist_to_authz(C, Type, BareObjectList) ->
     [find({Type,O},C) || O <- lists:flatten(BareObjectList)].
