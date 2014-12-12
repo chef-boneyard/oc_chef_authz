@@ -259,7 +259,16 @@ prune(Count, List) ->
 delete_authz_ids(_, _, []) ->
     ok;
 delete_authz_ids(SuperUserAuthzId, Type, AuthzIdsToRemove) ->
-    [oc_chef_authz:delete_resource(SuperUserAuthzId, Type, AuthzIdToRemove) || AuthzIdToRemove <- AuthzIdsToRemove].
+    Body = make_delete_body(Type, AuthzIdsToRemove),
+    {ok, _Val} = oc_chef_authz_http:request("bulk/_delete", post, [], Body,  SuperUserAuthzId).
+
+make_delete_body(Type, AuthzIdsToRemove) ->
+    iolist_to_binary(jiffy:encode(
+                       {[
+                         {<<"type">>, list_to_binary(atom_to_list(Type))},
+                         {<<"collection">>, AuthzIdsToRemove}
+                         ]}
+                       )).
 
 check_for_zero(0, Default) ->
     Default;
